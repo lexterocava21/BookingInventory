@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Inventory System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 30px;
+            color: #333;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .rooms-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .room-item {
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .room-item strong {
+            color: #333;
+        }
+
+        .room-item .details {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .error-code {
+            font-weight: 600;
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏨 Booking Inventory System</h1>
+
+        <div class="grid">
+            <!-- Create Booking Card -->
+            <div class="card">
+                <h2>Create Booking</h2>
+                <form id="bookingForm">
+                    <div class="form-group">
+                        <label for="roomId">Room ID:</label>
+                        <input type="number" id="roomId" name="roomId" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="checkIn">Check-In Date:</label>
+                        <input type="datetime-local" id="checkIn" name="checkIn" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="checkOut">Check-Out Date:</label>
+                        <input type="datetime-local" id="checkOut" name="checkOut" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="guestCount">Guest Count:</label>
+                        <input type="number" id="guestCount" name="guestCount" min="1" required>
+                    </div>
+
+                    <button type="submit" id="submitBtn">Create Booking</button>
+                </form>
+
+                <div id="bookingMessage" class="message"></div>
+                <div class="loading" id="bookingLoading">
+                    <span>Processing...</span>
+                </div>
+            </div>
+
+            <!-- Check Availability Card -->
+            <div class="card">
+                <h2>Check Availability</h2>
+                <form id="availabilityForm">
+                    <div class="form-group">
+                        <label for="availRoomId">Room ID:</label>
+                        <input type="number" id="availRoomId" name="availRoomId" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="availCheckIn">From Date:</label>
+                        <input type="datetime-local" id="availCheckIn" name="availCheckIn" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="availCheckOut">To Date:</label>
+                        <input type="datetime-local" id="availCheckOut" name="availCheckOut" required>
+                    </div>
+
+                    <button type="submit" id="checkBtn">Check Availability</button>
+                </form>
+
+                <div id="availabilityMessage" class="message"></div>
+                <div class="loading" id="availabilityLoading">
+                    <span>Checking...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rooms List Card -->
+        <div class="card">
+            <h2>Available Rooms</h2>
+            <div class="loading active" id="roomsLoading">
+                <span>Loading rooms...</span>
+            </div>
+            <div class="rooms-list" id="roomsList"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://localhost:5001/api';
+
+        // Set minimum check-in to now
+        function setMinDateTime() {
+            const now = new Date();
+            const minDateTime = now.toISOString().slice(0, 16);
+            document.getElementById('checkIn').min = minDateTime;
+            document.getElementById('availCheckIn').min = minDateTime;
+        }
+
+        setMinDateTime();
+
+        // Load rooms on page load
+        async function loadRooms() {
+            try {
+                const response = await fetch(`${API_BASE}/rooms`);
+                const rooms = await response.json();
+
+                const roomsList = document.getElementById('roomsList');
+                roomsList.innerHTML = '';
+
+                rooms.forEach(room => {
+                    const latestRate = room.rateHistories && room.rateHistories.length > 0 
+                        ? room.rateHistories[0].baseRate 
+                        : 'N/A';
+
+                    const roomHtml = `
+                        <div class="room-item">
+                            <strong>Room ${room.number}</strong>
+                            <div class="details">
+                                Hotel: ${room.hotel.name} | 
+                                Capacity: ${room.capacity} guests | 
+                                Current Rate: $${latestRate}/night
+                            </div>
+                        </div>
+                    `;
+                    roomsList.innerHTML += roomHtml;
+                });
+
+                document.getElementById('roomsLoading').classList.remove('active');
+            } catch (error) {
+                console.error('Error loading rooms:', error);
+                document.getElementById('roomsLoading').innerHTML = '<span style="color: #d32f2f;">Error loading rooms</span>';
+            }
+        }
+
+        // Create booking
+        document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const roomId = parseInt(document.getElementById('roomId').value);
+            const checkIn = new Date(document.getElementById('checkIn').value).toISOString();
+            const checkOut = new Date(document.getElementById('checkOut').value).toISOString();
+            const guestCount = parseInt(document.getElementById('guestCount').value);
+
+            const messageEl = document.getElementById('bookingMessage');
+            const loadingEl = document.getElementById('bookingLoading');
+            const submitBtn = document.getElementById('submitBtn');
+
+            messageEl.classList.remove('success', 'error', 'info');
+            messageEl.innerHTML = '';
+            loadingEl.classList.add('active');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/bookings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roomId, checkIn, checkOut, guestCount })
+                });
+
+                const data = await response.json();
+                loadingEl.classList.remove('active');
+
+                if (response.ok) {
+                    messageEl.classList.add('success');
+                    messageEl.innerHTML = `
+                        ✓ Booking created successfully!<br>
+                        Booking ID: ${data.id}<br>
+                        Total Price: $${data.totalPrice}<br>
+                        ${data.isOverCapacity ? '<strong style="color: #ff6f00;">⚠ Over Capacity</strong>' : ''}
+                    `;
+                    document.getElementById('bookingForm').reset();
+                } else {
+                    messageEl.classList.add('error');
+                    const errorCode = data.errorCode || 'UNKNOWN_ERROR';
+                    const message = data.message || 'An error occurred';
+                    messageEl.innerHTML = `
+                        ✗ <span class="error-code">${errorCode}</span><br>
+                        ${message}
+                    `;
+                }
+            } catch (error) {
+                loadingEl.classList.remove('active');
+                messageEl.classList.add('error');
+                messageEl.innerHTML = `✗ Error: ${error.message}`;
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Check availability
+        document.getElementById('availabilityForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const roomId = parseInt(document.getElementById('availRoomId').value);
+            const from = new Date(document.getElementById('availCheckIn').value).toISOString();
+            const to = new Date(document.getElementById('availCheckOut').value).toISOString();
+
+            const messageEl = document.getElementById('availabilityMessage');
+            const loadingEl = document.getElementById('availabilityLoading');
+            const checkBtn = document.getElementById('checkBtn');
+
+            messageEl.classList.remove('success', 'error', 'info');
+            messageEl.innerHTML = '';
+            loadingEl.classList.add('active');
+            checkBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/bookings/rooms/${roomId}/availability?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+                const data = await response.json();
+                loadingEl.classList.remove('active');
+
+                if (data.isAvailable) {
+                    messageEl.classList.add('success');
+                    messageEl.innerHTML = `✓ Room is available for the selected dates!`;
+                } else {
+                    messageEl.classList.add('info');
+                    messageEl.innerHTML = `✗ Room is not available.<br>${data.reason || 'Unknown reason'}`;
+                }
+            } catch (error) {
+                loadingEl.classList.remove('active');
+                messageEl.classList.add('error');
+                messageEl.innerHTML = `✗ Error: ${error.message}`;
+            } finally {
+                checkBtn.disabled = false;
+            }
+        });
+
+        // Load rooms on page load
+        loadRooms();
+    </script>
+</body>
+</html>
