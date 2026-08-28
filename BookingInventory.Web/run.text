@@ -1,0 +1,4 @@
+cd "c:\Users\Lexter Capule\Desktop\BookingManagementSys\BookingInventory.Api" ; dotnet run --urls http://localhost:5025
+
+
+to run api on vscode

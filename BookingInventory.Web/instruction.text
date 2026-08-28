@@ -1,0 +1,79 @@
+# Take-Home Exercise — Full Stack Developer (ASP.NET / C# / SQL Server)
+
+
+**Estimated effort:** 4–6 hours
+**Submission:** Zip file or private Git repo link, sent to [email]
+
+---
+
+## Instructions for the candidate
+
+Please read this exercise carefully before starting. It is intentionally scoped like a real feature request you'd receive on the job — including some ambiguity you'll need to resolve with reasonable assumptions (state them in your README).
+
+You must submit:
+1. Working code (backend + database + minimal frontend)
+2. A written README with your assumptions and trade-offs, in your own words
+
+You will then be invited to a follow-up interview where you will **present and walk through your own solution live**, explaining your design decisions and code.
+
+**Note:** Use of AI coding assistants for boilerplate is fine — this is a normal part of modern development. However, the live interview will require you to explain and defend every decision in the code in your own words, including the parts you didn't write yourself. Candidates who cannot explain their own code in the interview will be disqualified regardless of how the code was produced.
+
+---
+
+## The Task: Mini Booking Inventory System
+
+Build a simplified booking inventory API + minimal UI, per the spec below.
+
+### Business rules (read carefully — these have deliberate edge cases)
+
+You are modeling **hotel room inventory** for a small booking system.
+
+1. A `Room` belongs to a `Hotel`. Each room has a `Capacity` (number of guests) and a nightly `BaseRate`.
+2. A `Booking` reserves a `Room` for a date range (`CheckIn`, `CheckOut` — `CheckOut` is exclusive, i.e., a stay from the 10th to the 12th occupies nights of the 10th and 11th only).
+3. **Overlap rule:** Two bookings for the same room may NOT have overlapping date ranges — except that a booking ending on date X and a booking starting on date X are **not** considered overlapping (back-to-back same-day turnover is allowed).
+4. **Rate rule:** If a booking's date range spans a change in `BaseRate` (rates can change over time — model this however you think is reasonable, and explain your choice), the total price must be calculated using the rate that was active **on each individual night**, not a single flat rate for the whole stay.
+5. **Cancellation rule:** A booking can only be cancelled if `CheckIn` is more than 48 hours in the future. Cancelling releases the room for that date range immediately.
+6. **Guest count rule:** A booking cannot be created for more guests than the room's `Capacity`. However, a special exception exists: if the `Hotel.AllowOverbooking` flag is true, up to 1 extra guest is allowed per booking, but the system must flag this booking as `IsOverCapacity = true` for reporting purposes — it should NOT block the booking.
+
+### What to build
+
+**Database (SQL Server):**
+- Schema for `Hotel`, `Room`, `Booking` (and any supporting tables you need for the rate rule)
+- A stored procedure `sp_CreateBooking` that enforces rules #3, #4, #5, #6 at the data layer (not just in application code) and returns a clear error/result code if a rule is violated
+- Seed script with sample data (at least 2 hotels, 5 rooms, a rate change mid-timeline for at least one room, and a few existing bookings)
+
+**Backend (ASP.NET Core Web API, C#):**
+- `POST /api/bookings` — create a booking, calling into your stored procedure, returning appropriate HTTP status codes for each rule violation (not just generic 400s — the frontend needs to distinguish "overlap" from "over capacity" from "invalid dates")
+- `GET /api/rooms/{id}/availability?from=&to=` — returns whether the room is available for a given range, and if not, why
+- `DELETE /api/bookings/{id}` — cancel a booking, enforcing rule #5
+- Unit tests for the rate-spanning calculation (rule #4) — this is the part most candidates get wrong, so we're specifically looking for correct handling here
+
+**Frontend (any framework — Angular, React, or plain JS+HTML, your choice):**
+- A simple form to create a booking (room, dates, guest count) that calls your API and displays success or the specific error returned
+- A simple availability view for a room over a date range
+
+### Deliberately NOT specified (use your judgment, document your reasoning)
+- Exact rate-change data model
+- Authentication (skip it — assume an open API for this exercise)
+- Styling/UI polish (functional > pretty)
+- Whether cancellation soft-deletes or hard-deletes the booking row
+
+---
+
+## Evaluation criteria
+- Correctness of the overlap and rate-spanning logic (rules #3 and #4) — these are the core of the test
+- SQL Server schema design and stored procedure quality (transactions, concurrency safety — what happens if two bookings for the same room/dates are submitted at the same time?)
+- API design clarity (status codes, error payloads)
+- Code readability and structure
+- Quality of the README's stated assumptions
+- **Ability to present and defend your own code live in the interview** — this matters as much as the code itself
+
+---
+
+## What we're looking for in the follow-up interview
+You'll be asked to present your solution and walk through your code live. Be ready to also answer, without notes:
+- Walk through what happens, step by step, when two overlapping booking requests hit your API at the same time
+- Explain why you chose your specific data model for the rate-change rule
+- Modify one business rule live (we'll give you a new rule on the call) and talk through how you'd change your schema and code
+
+Good luck — we're looking forward to seeing your approach.

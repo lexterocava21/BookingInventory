@@ -1,0 +1,50 @@
+Demo script for the booking inventory system
+
+Intro
+Hi everyone. I built a small booking inventory system with an ASP.NET Core API and a lightweight frontend. The goal was to model hotel room inventory, check availability, calculate nightly pricing, and handle booking rules in a way that is easy to understand and demo.
+
+I’ll walk through the key parts of the solution in a simple order: data model, room availability, booking creation, dynamic pricing, and cancellation.
+
+1. Data model and room setup
+The system has hotels, rooms, and bookings. Each room belongs to a hotel, has a capacity, and can have rate history entries over time. This lets the system price each night based on the rate that was active on that date, instead of using one flat rate for the full stay.
+
+When I open the room list, you can see the actual hotel and room information being returned from the backend. That confirms the API is connected to the database and the frontend is consuming the live data.
+
+2. Availability check
+The availability endpoint checks a room across a date range and returns whether the room is open for that period.
+
+I’ll show a sample request for a room and a date range. The API evaluates overlapping bookings and returns a clear response, including the reason if the room is unavailable. This is the first place the business rules are enforced before a booking is accepted.
+
+3. Creating a booking
+Next, I’ll create a booking from the form. I select the room, enter the check-in and check-out dates, and set the guest count.
+
+The backend validates the request in a few steps: it checks the dates, looks up the room, verifies the room is available, validates the guest count against capacity, applies the overbooking exception when allowed, and calculates the total price using the active nightly rates.
+
+If a booking is valid, the system stores it and returns a success response. If not, it returns a specific error code and message so the frontend can tell the user exactly what went wrong.
+
+4. Dynamic rate logic
+This is the more interesting part of the system. Rates are not treated as one single value for the whole stay.
+
+Instead, the app looks up the effective rate for each night in the booking range and sums those nightly values. That means if the rate changes halfway through a stay, the system calculates the total correctly by night.
+
+For example, if a room rate changes mid-stay, the booking price reflects the old rate for the earlier nights and the new rate for the later nights. This is the correct approach for hotel pricing and avoids undercharging or overcharging.
+
+5. Cancellation rule
+The cancellation flow enforces the 48-hour rule. A booking can only be cancelled if check-in is more than 48 hours away.
+
+If the user tries to cancel too late, the API rejects it with a clear message. If the cancellation is allowed, the booking is marked as cancelled and the room is released for future inventory calculations.
+
+6. Overbooking exception
+The guest count rule allows a room to exceed capacity only under a controlled exception. If the hotel allows overbooking, the booking can pass if the guest count goes above capacity by at most one guest. In that case, the booking is still created, but the system flags it as over capacity for reporting and operational visibility.
+
+This keeps the rule realistic: staff can still accept the booking when needed, while preserving data for review.
+
+7. Why this design works
+The system keeps the logic simple and readable. The API is responsible for validation and business rules, while the frontend remains focused on collecting input and showing responses. The nightly rate calculation is designed for correctness and is easy to reason about.
+
+The app is intentionally lightweight, but the underlying patterns match real hotel inventory behavior and can be extended with stricter database-level enforcement, audit history, and more advanced concurrency protections if needed.
+
+Closing
+That covers the main flow of the system: room lookup, availability checks, booking creation, dynamic pricing, and cancellation enforcement. The app demonstrates how a small booking inventory system can enforce business logic cleanly while keeping the user experience straightforward.
+
+If you want, I can also turn this into a more polished 2-minute demo script or a shorter 30-second interview version.
